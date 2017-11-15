@@ -30,15 +30,16 @@ func init() {
 	publisher = gocent.NewClient(centrifugoURL, centrifugoSecret, centrifugoTimeout)
 }
 
-func GetHMACSign(userID int64) (string, error) {
-	secret, err := crypto.GetHMAC(centrifugoSecret, strconv.FormatInt(userID, 10))
+func GetHMACSign(userID int64) (string, string, error) {
+	timestamp := time.Now().Unix()
+	secret, err := crypto.GetHMAC(centrifugoSecret, strconv.FormatInt(userID, 10), timestamp)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("HMAC getting error")
-		return "", err
+		return "", "", err
 	}
 	result := hex.EncodeToString(secret)
 	clientsChannels[userID] = result
-	return result, nil
+	return result, strconv.FormatInt(timestamp, 10), nil
 }
 
 func Write(userID int64, data string) (bool, error) {

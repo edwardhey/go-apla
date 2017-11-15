@@ -39,6 +39,7 @@ type loginResult struct {
 	KeyID       string `json:"key_id,omitempty"`
 	Address     string `json:"address,omitempty"`
 	NotifyKey   string `json:"notify_key,omitempty"`
+	Timestamp   string `json:"timestamp,omitempty"`
 }
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
@@ -123,7 +124,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	result.NotifyKey, err = publisher.GetHMACSign(wallet)
+	result.NotifyKey, result.Timestamp, err = publisher.GetHMACSign(wallet)
 	if err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
