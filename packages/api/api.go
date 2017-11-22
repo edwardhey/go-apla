@@ -235,6 +235,13 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 				data.params[key] = val
 			}
 		}
+		data.params[`apiAuth`] = r.Header.Get(`Authorization`)
+		data.params[`apiSchema`] = `http`
+		if r.TLS != nil {
+			data.params[`apiSchema`] = `https`
+		}
+		data.params[`apiHost`] = r.Host
+
 		for _, handler := range handlers {
 			if handler(w, r, &data, requestLogger) != nil {
 				return

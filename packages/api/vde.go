@@ -155,16 +155,16 @@ func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 	return nil
 }
 
-func VDEContract(data []byte) (result *contractResult, err error) {
+func VDEContract(data *apiData, cntdata []byte) (result *contractResult, err error) {
 	var ret string
-	hash, err := crypto.Hash(data)
+	hash, err := crypto.Hash(cntdata)
 	if err != nil {
 		return
 	}
 	result = &contractResult{Hash: hex.EncodeToString(hash)}
 
-	sc := smart.SmartContract{VDE: true, TxHash: hash}
-	err = InitSmartContract(&sc, data)
+	sc := smart.SmartContract{VDE: true, TxHash: hash, APIParams: &data.params}
+	err = InitSmartContract(&sc, cntdata)
 	if err == nil {
 		if ret, err = sc.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err == nil {
 			result.Result = ret

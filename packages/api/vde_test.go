@@ -368,3 +368,34 @@ func TestHTTPRequest(t *testing.T) {
 		return
 	}
 }
+
+func TestAPIRequest(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(6)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		    data {
+			}
+			action {
+				var pars, ret map
+				ret = APIRequest("content/page/default_page", "POST", pars)
+				if ret["menu"] != "government" {
+					error "wrong menu APIRequest"
+				}
+				ret = APIRequest("contract/VDEFunctions?vde=true", "GET", pars)
+				if ret["name"] != "@1VDEFunctions" {
+					error "wrong contract APIRequest"
+				}
+			}}`}, `Conditions`: {`true`}, `vde`: {`true`}}
+
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+	if err := postTx(rnd, &url.Values{`vde`: {`true`}}); err != nil {
+		t.Error(err)
+		return
+	}
+}

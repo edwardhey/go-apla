@@ -52,6 +52,7 @@ type SmartContract struct {
 	TxHash        []byte
 	PublicKeys    [][]byte
 	DbTransaction *model.DbTransaction
+	APIParams     *map[string]interface{}
 }
 
 var (
@@ -123,6 +124,7 @@ func EmbedFuncs(vm *script.VM) {
 		"TableConditions":    TableConditions,
 		"ValidateCondition":  ValidateCondition,
 		//   VDE functions only
+		"APIRequest":  APIRequest,
 		"HTTPRequest": HTTPRequest,
 	}, AutoPars: map[string]string{
 		`*smart.SmartContract`: `sc`,
@@ -854,6 +856,30 @@ func IDToAddress(id int64) (out string) {
 		out = `invalid`
 	}
 	return
+}
+
+// APIRequest sends api http request
+func APIRequest(sc *SmartContract, requrl, method string, params map[string]interface{}) (map[string]interface{}, error) {
+	ret := make(map[string]interface{})
+
+	heads := map[string]interface{}{
+		`Authorization`: (*sc.APIParams)[`apiAuth`].(string),
+	}
+	out, err := HTTPRequest(fmt.Sprintf(`%s://%s/api/v2/%s`, (*sc.APIParams)[`apiSchema`].(string),
+		(*sc.APIParams)[`apiHost`].(string), requrl), method, heads, params)
+	if err != nil {
+		out = err.Error()
+		if !strings.HasPrefix(out, `{`) {
+			if off := strings.IndexByte(out, '{'); off != -1 {
+				out = out[off:]
+			}
+		}
+	}
+	err = json.Unmarshal([]byte(out), &ret)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling json to map in APIRequest")
+	}
+	return ret, err
 }
 
 // HTTPRequest sends http request
